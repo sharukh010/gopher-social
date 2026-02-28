@@ -1,8 +1,11 @@
 package main
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/sharukh010/social/internal/store"
 )
 
@@ -48,7 +51,11 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 	
 	ctx := r.Context()
 
-	if err := app.store.Users.CreateAndInvite(ctx,user,""); err != nil {
+	plainToken := uuid.New().String()
+
+	hash := sha256.Sum256([]byte(plainToken))
+	hashToken := hex.EncodeToString(hash[:])
+	if err := app.store.Users.CreateAndInvite(ctx,user,hashToken,app.config.mail.exp); err != nil {
 		app.internalServerError(w,r,err)
 		return 
 	}

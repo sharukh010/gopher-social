@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -41,7 +42,7 @@ type UserStore struct {
 	db *sql.DB
 }
 
-func (s *UserStore) Create(ctx context.Context, user *User) error {
+func (s *UserStore) Create(ctx context.Context,tx *sql.Tx, user *User) error {
 	query := `
 	INSERT INTO USERS
 	(username,email,password)
@@ -51,7 +52,7 @@ func (s *UserStore) Create(ctx context.Context, user *User) error {
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
 	defer cancel()
 
-	err := s.db.QueryRowContext(
+	err := tx.QueryRowContext(
 		ctx,
 		query,
 		user.Username,
@@ -153,9 +154,38 @@ func (s *UserStore) UnFollow(ctx context.Context, followerUserID, followingUserI
 	return nil
 }
 
-func (s *UserStore) CreateAndInvite(ctx context.Context,user *User,token string) error {
-	// transaction wrapper 
+func (s *UserStore) createUserInvitation(ctx context.Context,tx *sql.Tx,token string,exp time.Duration,userID int64) error {
+	query := `INSERT INTO user_invitations (token,user_id,expiry) values ($1,$2,$3)`
+
+	ctx,cancel := context.WithTimeout(ctx,QueryTimeoutDuration)
+	defer cancel()
+
+	_,err := tx.ExecContext(
+		ctx,
+		query,
+		token,
+		userID,
+		time.Now().Add(exp),
+	)
+	if err != nil {
+		return err 
+	}
+	return nil 
+}
+
+func (s *UserStore) CreateAndInvite(ctx context.Context,user *User,token string,invitationExp time.Duration) error {
+	return withTx(s.db,ctx,func(tx *sql.Tx) error {
+		
 		// create a user 
+		if err:= s.Create(ctx,tx,user); err != nil {
+			return err 
+		}
 		// create a invite
+		if err := s.createUserInvitation(ctx,tx,token,invitationExp,user.ID);err != nil {
+			return err 
+		}
+		return nil
+	})
+
 	return nil 
 }
