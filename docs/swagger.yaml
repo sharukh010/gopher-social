@@ -1,0 +1,513 @@
+basePath: /v1
+definitions:
+  main.CreateCommentPayload:
+    properties:
+      content:
+        maxLength: 100
+        minLength: 6
+        type: string
+      user_id:
+        type: integer
+    required:
+    - content
+    - user_id
+    type: object
+  main.CreatePostPayload:
+    properties:
+      content:
+        maxLength: 1000
+        type: string
+      tags:
+        items:
+          type: string
+        type: array
+      title:
+        maxLength: 100
+        type: string
+    required:
+    - content
+    - title
+    type: object
+  main.FollowRequest:
+    properties:
+      user_id:
+        type: integer
+    type: object
+  main.UpdatePostPayload:
+    properties:
+      content:
+        maxLength: 1000
+        type: string
+      tags:
+        items:
+          type: string
+        type: array
+      title:
+        maxLength: 100
+        type: string
+    type: object
+  main.healthResponse:
+    properties:
+      env:
+        type: string
+      status:
+        type: string
+      version:
+        type: string
+    type: object
+  store.Comment:
+    properties:
+      content:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      post_id:
+        type: integer
+      user:
+        $ref: '#/definitions/store.User'
+      user_id:
+        type: integer
+    type: object
+  store.Post:
+    properties:
+      comments:
+        items:
+          $ref: '#/definitions/store.Comment'
+        type: array
+      content:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      tags:
+        items:
+          type: string
+        type: array
+      title:
+        type: string
+      updated_at:
+        type: string
+      user:
+        $ref: '#/definitions/store.User'
+      user_id:
+        type: integer
+      version:
+        type: integer
+    type: object
+  store.PostWithMetadata:
+    properties:
+      comment_count:
+        type: integer
+      comments:
+        items:
+          $ref: '#/definitions/store.Comment'
+        type: array
+      content:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      tags:
+        items:
+          type: string
+        type: array
+      title:
+        type: string
+      updated_at:
+        type: string
+      user:
+        $ref: '#/definitions/store.User'
+      user_id:
+        type: integer
+      version:
+        type: integer
+    type: object
+  store.User:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      username:
+        type: string
+    type: object
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: This is a Social API.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: GopherSocial API
+paths:
+  /health:
+    get:
+      description: API health check
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: API is live
+          schema:
+            $ref: '#/definitions/main.healthResponse'
+        "500":
+          description: Something went worng
+          schema: {}
+      security:
+      - ApiKeyAuth: []
+      summary: Health check
+      tags:
+      - Health
+  /posts/:
+    post:
+      consumes:
+      - application/json
+      description: Creates a Post and return Post details
+      parameters:
+      - description: Post details
+        in: body
+        name: post
+        required: true
+        schema:
+          $ref: '#/definitions/main.CreatePostPayload'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Post Created
+          schema:
+            $ref: '#/definitions/store.Post'
+        "400":
+          description: Invalid Post Payload
+          schema: {}
+        "500":
+          description: Something went wrong
+          schema: {}
+      security:
+      - ApiKeyAuth: []
+      summary: Create a Post
+      tags:
+      - posts
+  /posts/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete Post details by ID
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Post Deleted
+        "404":
+          description: Post not found
+          schema: {}
+        "500":
+          description: Something went wrong
+          schema: {}
+      security:
+      - ApiKeyAuth: []
+      summary: Delete Post
+      tags:
+      - posts
+    get:
+      consumes:
+      - application/json
+      description: Fetch Post details by ID
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Post Details
+          schema:
+            $ref: '#/definitions/store.Post'
+        "404":
+          description: Post Not found
+          schema: {}
+        "500":
+          description: Something went wrong
+          schema: {}
+      security:
+      - ApiKeyAuth: []
+      summary: Fetch Post
+      tags:
+      - posts
+    patch:
+      consumes:
+      - application/json
+      description: Update Post details by ID
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Updated Post details
+        in: body
+        name: post
+        required: true
+        schema:
+          $ref: '#/definitions/main.UpdatePostPayload'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Post Updated
+          schema:
+            $ref: '#/definitions/store.Post'
+        "400":
+          description: Invalid Post Payload
+          schema: {}
+        "404":
+          description: Post not found
+          schema: {}
+        "500":
+          description: Something went wrong
+          schema: {}
+      security:
+      - ApiKeyAuth: []
+      summary: Update Post
+      tags:
+      - posts
+  /posts/{id}/comments:
+    post:
+      consumes:
+      - application/json
+      description: Creates a Post and return details
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Comment
+        in: body
+        name: comment
+        required: true
+        schema:
+          $ref: '#/definitions/main.CreateCommentPayload'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Comment Created
+          schema:
+            $ref: '#/definitions/store.Comment'
+        "400":
+          description: Invalid Comment Payload
+          schema: {}
+        "404":
+          description: Post not found
+          schema: {}
+        "500":
+          description: Something Went wrong
+          schema: {}
+      security:
+      - ApiKeyAuth: []
+      summary: Create a Comment
+      tags:
+      - comments
+  /posts/{postID}/comments/{commentID}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete Comment details by ID
+      parameters:
+      - description: Post ID
+        in: path
+        name: postID
+        required: true
+        type: integer
+      - description: Comment ID
+        in: path
+        name: commentID
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Comment Deleted
+        "404":
+          description: Comment Not found
+          schema: {}
+        "500":
+          description: Something went wrong
+          schema: {}
+      security:
+      - ApiKeyAuth: []
+      summary: Delete Comment
+      tags:
+      - comments
+  /users/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Fetches a user profile by ID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User Details
+          schema:
+            $ref: '#/definitions/store.User'
+        "404":
+          description: User not found
+          schema: {}
+        "500":
+          description: Something went wrong
+          schema: {}
+      security:
+      - ApiKeyAuth: []
+      summary: Fetches a user profile
+      tags:
+      - users
+  /users/{id}/follow:
+    put:
+      consumes:
+      - application/json
+      description: Follow a user by ID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: User ID
+        in: body
+        name: id
+        required: true
+        schema:
+          $ref: '#/definitions/main.FollowRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Followed User
+        "400":
+          description: Invalid Follow Payload
+          schema: {}
+        "404":
+          description: User not found
+          schema: {}
+        "500":
+          description: Something went wrong
+          schema: {}
+      security:
+      - ApiKeyAuth: []
+      summary: Follow a user
+      tags:
+      - users
+  /users/{id}/unfollow:
+    put:
+      consumes:
+      - application/json
+      description: Unfollow a user by ID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: User ID
+        in: body
+        name: id
+        required: true
+        schema:
+          $ref: '#/definitions/main.FollowRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Unfollowed User
+        "400":
+          description: Invalid Unfollow Payload
+          schema: {}
+        "404":
+          description: User not found
+          schema: {}
+        "500":
+          description: Something went wrong
+          schema: {}
+      security:
+      - ApiKeyAuth: []
+      summary: Unfollow a user
+      tags:
+      - users
+  /users/feed:
+    get:
+      consumes:
+      - application/json
+      description: Fetch User Feed by ID
+      parameters:
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      - description: Offset
+        in: query
+        name: offset
+        type: integer
+      - description: Sort
+        in: query
+        name: sort
+        type: string
+      - description: Tags
+        in: query
+        name: tags
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User Feed
+          schema:
+            items:
+              $ref: '#/definitions/store.PostWithMetadata'
+            type: array
+        "400":
+          description: Invalid Feed payload
+          schema: {}
+        "404":
+          description: Feed not found
+          schema: {}
+        "500":
+          description: Something went wrong
+          schema: {}
+      security:
+      - ApiKeyAuth: []
+      summary: Fetch User Feed
+      tags:
+      - users
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
