@@ -12,16 +12,16 @@ type User struct {
 	ID        int64  `json:"id"`
 	Username  string `json:"username"`
 	Email     string `json:"email"`
-	Password  password `json:"-"`
+	Password  Password `json:"-"`
 	CreatedAt string `json:"created_at"`
 }
 
-type password struct {
+type Password struct {
 	// text *string 
 	hash []byte
 }
 
-func (p *password) Set(text string) error {
+func (p *Password) Set(text string) error {
 	hash,err := bcrypt.GenerateFromPassword([]byte(text),bcrypt.DefaultCost)
 	if err != nil {
 		return err 
@@ -32,7 +32,7 @@ func (p *password) Set(text string) error {
 }
 
 
-func (p *password) Compare(text string) error {
+func (p *Password) Compare(text string) error {
 	if err := bcrypt.CompareHashAndPassword(p.hash,[]byte(text)); err != nil {
 		return err 
 	}
