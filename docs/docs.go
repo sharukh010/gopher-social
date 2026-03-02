@@ -24,6 +24,53 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/authenticate/user": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Register a User",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "authentication"
+                ],
+                "summary": "Register a User",
+                "parameters": [
+                    {
+                        "description": "User credentials",
+                        "name": "post",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/main.RegisterUserPayload"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "User Registered",
+                        "schema": {
+                            "$ref": "#/definitions/main.UserWithToken"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid User Payload",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Something went wrong",
+                        "schema": {}
+                    }
+                }
+            }
+        },
         "/health": {
             "get": {
                 "security": [
@@ -348,6 +395,48 @@ const docTemplate = `{
                 }
             }
         },
+        "/users/activate/{token}": {
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Activate User by token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Activate User",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "token",
+                        "name": "token",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "User Activated"
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Something went wrong",
+                        "schema": {}
+                    }
+                }
+            }
+        },
         "/users/feed": {
             "get": {
                 "security": [
@@ -622,6 +711,29 @@ const docTemplate = `{
                 }
             }
         },
+        "main.RegisterUserPayload": {
+            "type": "object",
+            "required": [
+                "email",
+                "password",
+                "username"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "password": {
+                    "type": "string",
+                    "maxLength": 72,
+                    "minLength": 3
+                },
+                "username": {
+                    "type": "string",
+                    "maxLength": 100
+                }
+            }
+        },
         "main.UpdatePostPayload": {
             "type": "object",
             "properties": {
@@ -638,6 +750,29 @@ const docTemplate = `{
                 "title": {
                     "type": "string",
                     "maxLength": 100
+                }
+            }
+        },
+        "main.UserWithToken": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "token": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
                 }
             }
         },
@@ -774,6 +909,9 @@ const docTemplate = `{
                 },
                 "id": {
                     "type": "integer"
+                },
+                "is_active": {
+                    "type": "boolean"
                 },
                 "username": {
                     "type": "string"

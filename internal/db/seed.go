@@ -74,13 +74,13 @@ var comments = []string{
 	"Thanks for the information, very useful.",
 }
 
-func Seed(store store.Storage,db *sql.DB) {
+func Seed(store store.Storage, db *sql.DB) {
 	ctx := context.Background()
 
 	users := generateUsers(100)
-	tx,_ := db.BeginTx(ctx,nil)
+	tx, _ := db.BeginTx(ctx, nil)
 	for _, user := range users {
-		if err := store.Users.Create(ctx, tx,user); err != nil {
+		if err := store.Users.Create(ctx, tx, user); err != nil {
 			_ = tx.Rollback()
 			log.Println("Error creating user:", err)
 			return
@@ -115,9 +115,9 @@ func generateUsers(num int) []*store.User {
 			Username: usernames[i%len(usernames)] + fmt.Sprintf("%d", i),
 			Email:    usernames[i%len(usernames)] + fmt.Sprintf("%d", i) + "@example.com",
 			Password: store.Password{},
-			}
-		users[i].Password.Set("abc123")
 		}
+		users[i].Password.Set("abc123")
+	}
 
 	return users
 }
